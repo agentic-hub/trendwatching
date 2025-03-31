@@ -1,0 +1,9 @@
+version: 2
+endpoint: http://localhost:1337
+admin_secret: nhost-admin-secret
+metadata_directory: metadata
+migrations_directory: migrations
+seeds_directory: seeds
+actions:
+  kind: synchronous
+  handler_webhook_baseurl: http://localhost:3000 

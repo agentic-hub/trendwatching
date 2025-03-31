@@ -1,0 +1,17 @@
+# General
+.DS_Store
+node_modules
+.env
+
+# Data
+data/
+
+# Logs
+logs
+*.log
+
+# Editor-specific
+.idea/
+.vscode/
+*.swp
+*.swo 
