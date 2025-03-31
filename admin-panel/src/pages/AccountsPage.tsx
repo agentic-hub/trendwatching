@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Container, Row, Col, Card, Table, Button, Badge, Modal, Form } from 'react-bootstrap';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { Link } from 'react-router-dom';
+import { Account } from '../types';
 
 // GraphQL queries and mutations
 const GET_INSTAGRAM_ACCOUNTS = gql`
@@ -151,7 +152,7 @@ const AccountsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {accounts.map((account) => (
+                  {accounts.map((account: Account) => (
                     <tr key={account.id}>
                       <td>{account.username}</td>
                       <td>{account.scrape_frequency}</td>

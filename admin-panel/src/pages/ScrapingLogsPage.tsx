@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Container, Card, Table, Badge, Button, Form, Row, Col } from 'react-bootstrap';
 import { useQuery, gql } from '@apollo/client';
+import { Account, ScrapingLog } from '../types';
 
 // GraphQL queries
 const GET_SCRAPING_LOGS = gql`
@@ -206,7 +207,7 @@ const ScrapingLogsPage: React.FC = () => {
                   }}
                 >
                   <option value="">All Accounts</option>
-                  {accounts.map((account) => (
+                  {accounts.map((account: Account) => (
                     <option key={account.id} value={account.id}>
                       {account.username}
                     </option>
@@ -252,7 +253,7 @@ const ScrapingLogsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => {
+                  {logs.map((log: ScrapingLog) => {
                     const startDate = new Date(log.started_at);
                     const finishDate = log.finished_at ? new Date(log.finished_at) : null;
                     const duration = finishDate 

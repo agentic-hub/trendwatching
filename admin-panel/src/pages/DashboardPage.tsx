@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { useQuery, gql } from '@apollo/client';
+import { Account, ScrapingLog } from '../types';
 
 // GraphQL queries
 const GET_DASHBOARD_STATS = gql`
@@ -64,7 +65,7 @@ const DashboardPage: React.FC = () => {
         <Col md={6} lg={3} className="mb-3">
           <Card className="h-100 text-center">
             <Card.Body>
-              <h2>{activeAccounts.filter(a => a.is_active).length}</h2>
+              <h2>{activeAccounts.filter((a: Account) => a.is_active).length}</h2>
               <Card.Title>Active Accounts</Card.Title>
             </Card.Body>
           </Card>
@@ -81,7 +82,7 @@ const DashboardPage: React.FC = () => {
           <Card className="h-100 text-center">
             <Card.Body>
               <h2>
-                {recentLogs.reduce((total, log) => total + (log.items_scraped || 0), 0)}
+                {recentLogs.reduce((total: number, log: ScrapingLog) => total + (log.items_scraped || 0), 0)}
               </h2>
               <Card.Title>Recent Items Scraped</Card.Title>
             </Card.Body>
@@ -108,7 +109,7 @@ const DashboardPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {recentLogs.map(log => (
+                      {recentLogs.map((log: ScrapingLog) => (
                         <tr key={log.id}>
                           <td>{log.instagram_account?.username}</td>
                           <td>
@@ -147,7 +148,7 @@ const DashboardPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {activeAccounts.map(account => (
+                      {activeAccounts.map((account: Account) => (
                         <tr key={account.id}>
                           <td>{account.username}</td>
                           <td>
