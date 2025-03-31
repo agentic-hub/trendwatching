@@ -5,23 +5,28 @@ import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../utils/AuthContext';
 
-interface LoginFormValues {
+interface RegisterFormValues {
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
-const LoginSchema = Yup.object().shape({
+const RegisterSchema = Yup.object().shape({
   email: Yup.string()
     .email('Invalid email')
     .required('Email is required'),
   password: Yup.string()
+    .min(8, 'Password must be at least 8 characters')
     .required('Password is required'),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref('password')], 'Passwords must match')
+    .required('Confirm password is required'),
 });
 
-const LoginPage: React.FC = () => {
+const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const { register, isAuthenticated } = useAuth();
+  const [registerError, setRegisterError] = useState<string | null>(null);
 
   if (isAuthenticated) {
     navigate('/dashboard');
@@ -29,15 +34,15 @@ const LoginPage: React.FC = () => {
   }
 
   const handleSubmit = async (
-    values: LoginFormValues,
-    { setSubmitting }: FormikHelpers<LoginFormValues>
+    values: RegisterFormValues,
+    { setSubmitting }: FormikHelpers<RegisterFormValues>
   ) => {
     try {
-      setLoginError(null);
-      await login(values.email, values.password);
+      setRegisterError(null);
+      await register(values.email, values.password);
       navigate('/dashboard');
-    } catch (error) {
-      setLoginError('Invalid email or password');
+    } catch (error: any) {
+      setRegisterError(error.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -49,16 +54,16 @@ const LoginPage: React.FC = () => {
         <Col md={6} lg={4}>
           <Card>
             <Card.Header as="h4" className="text-center bg-dark text-white py-3">
-              Instagram Scraper Admin
+              Create Account
             </Card.Header>
             <Card.Body className="p-4">
-              {loginError && (
-                <Alert variant="danger">{loginError}</Alert>
+              {registerError && (
+                <Alert variant="danger">{registerError}</Alert>
               )}
               
               <Formik
-                initialValues={{ email: '', password: '' }}
-                validationSchema={LoginSchema}
+                initialValues={{ email: '', password: '', confirmPassword: '' }}
+                validationSchema={RegisterSchema}
                 onSubmit={handleSubmit}
               >
                 {({
@@ -86,7 +91,7 @@ const LoginPage: React.FC = () => {
                       </Form.Control.Feedback>
                     </Form.Group>
 
-                    <Form.Group className="mb-4">
+                    <Form.Group className="mb-3">
                       <Form.Label>Password</Form.Label>
                       <Form.Control
                         type="password"
@@ -101,17 +106,32 @@ const LoginPage: React.FC = () => {
                       </Form.Control.Feedback>
                     </Form.Group>
 
+                    <Form.Group className="mb-4">
+                      <Form.Label>Confirm Password</Form.Label>
+                      <Form.Control
+                        type="password"
+                        name="confirmPassword"
+                        value={values.confirmPassword}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        isInvalid={touched.confirmPassword && !!errors.confirmPassword}
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        {errors.confirmPassword}
+                      </Form.Control.Feedback>
+                    </Form.Group>
+
                     <Button
                       variant="primary"
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-100"
+                      className="w-100 mb-3"
                     >
-                      {isSubmitting ? 'Logging in...' : 'Login'}
+                      {isSubmitting ? 'Creating account...' : 'Register'}
                     </Button>
                     
-                    <div className="text-center mt-3">
-                      Don't have an account? <Link to="/register">Register</Link>
+                    <div className="text-center">
+                      Already have an account? <Link to="/login">Login</Link>
                     </div>
                   </Form>
                 )}
@@ -124,4 +144,4 @@ const LoginPage: React.FC = () => {
   );
 };
 
-export default LoginPage; 
+export default RegisterPage; 

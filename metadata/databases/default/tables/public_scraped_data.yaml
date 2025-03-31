@@ -1,0 +1,57 @@
+table:
+  name: scraped_data
+  schema: public
+object_relationships:
+  - name: instagram_account
+    using:
+      foreign_key_constraint_on: instagram_account_id
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns:
+        - comments_count
+        - likes_count
+        - metadata
+        - caption
+        - image_url
+        - post_id
+        - posted_at
+        - scraped_at
+        - id
+        - instagram_account_id
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - comments_count
+        - likes_count
+        - metadata
+        - caption
+        - image_url
+        - post_id
+        - posted_at
+        - scraped_at
+        - id
+        - instagram_account_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - comments_count
+        - likes_count
+        - metadata
+        - caption
+        - image_url
+        - post_id
+        - posted_at
+        - scraped_at
+        - id
+        - instagram_account_id
+      filter: {}
+      check: {}
+    comment: ""

@@ -1,0 +1,61 @@
+table:
+  name: instagram_accounts
+  schema: public
+array_relationships:
+  - name: scraped_data
+    using:
+      foreign_key_constraint_on:
+        column: instagram_account_id
+        table:
+          name: scraped_data
+          schema: public
+  - name: scraping_logs
+    using:
+      foreign_key_constraint_on:
+        column: instagram_account_id
+        table:
+          name: scraping_logs
+          schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      columns:
+        - is_active
+        - notes
+        - profile_id
+        - scrape_frequency
+        - username
+        - created_at
+        - updated_at
+        - id
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - is_active
+        - notes
+        - profile_id
+        - scrape_frequency
+        - username
+        - created_at
+        - updated_at
+        - id
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - is_active
+        - notes
+        - profile_id
+        - scrape_frequency
+        - username
+        - created_at
+        - updated_at
+        - id
+      filter: {}
+      check: {}
+    comment: ""

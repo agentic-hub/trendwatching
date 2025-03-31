@@ -1,9 +1,10 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import axios from 'axios';
+import { nhost } from './nhost';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -19,23 +20,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
-    setLoading(false);
+    // Check if user is already authenticated using Nhost
+    const checkAuthState = async () => {
+      const isAuthenticated = nhost.auth.isAuthenticated();
+      setIsAuthenticated(isAuthenticated);
+      setLoading(false);
+    };
+    
+    checkAuthState();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post(
-        `${process.env.REACT_APP_AUTH_URL || 'http://localhost:1337/v1/auth'}/signin`,
-        { email, password }
-      );
+      const { session, error } = await nhost.auth.signIn({
+        email,
+        password
+      });
 
-      if (response.data?.session?.accessToken) {
-        localStorage.setItem('auth_token', response.data.session.accessToken);
+      if (error) {
+        throw error;
+      }
+
+      if (session) {
         setIsAuthenticated(true);
       } else {
         throw new Error('Authentication failed');
@@ -46,13 +52,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('auth_token');
-    setIsAuthenticated(false);
+  const register = async (email: string, password: string) => {
+    try {
+      const { session, error } = await nhost.auth.signUp({
+        email,
+        password
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (session) {
+        setIsAuthenticated(true);
+      } else {
+        throw new Error('Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await nhost.auth.signOut();
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
