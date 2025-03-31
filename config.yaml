@@ -1,10 +1,6 @@
 version: 3
-project_id: your-project-id
-service_configs:
-  hasura:
-    admin_secret: nhost-admin-secret
-    webhook_secret: nhost-webhook-secret
-    jwt_secret: '{"type":"HS256","key":"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"}'
-    api_port: 1337
-    console_port: 9695
-    migrations_api_port: 9693 
+endpoint: http://localhost:8080
+metadata_directory: metadata
+actions:
+  kind: synchronous
+  handler_webhook_baseurl: http://localhost:3000
