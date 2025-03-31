@@ -1,1 +1,6 @@
-[]
+- name: instagram_scraper
+  webhook: '{{FUNCTIONS_URL}}/instagram-scraper'
+  schedule: '* * * * *'
+  include_in_metadata: true
+  payload: {}
+  comment: ""

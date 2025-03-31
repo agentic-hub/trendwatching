@@ -49,6 +49,8 @@ services:
       HASURA_GRAPHQL_LOG_LEVEL: debug
       HASURA_GRAPHQL_ENABLE_CONSOLE: 'true'
       HASURA_GRAPHQL_DEV_MODE: 'true'
+      FUNCTIONS_URL: http://functions:3000"
+      NEXT_PUBLIC_NHOST_FUNCTIONS_URL: ${NEXT_PUBLIC_NHOST_FUNCTIONS_URL:-http://localhost:1337/v1/functions}
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
     healthcheck:
       test:
