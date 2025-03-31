@@ -18,8 +18,6 @@ services:
       - '3030:3030'
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
-    networks:
-      - dev-network
   postgres:
     image: postgres
     restart: always
@@ -27,11 +25,9 @@ services:
       - ./data/db:/var/lib/postgresql/data
       - ./initdb.d:/docker-entrypoint-initdb.d:ro
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secretpgpassword}
     ports:
       - '5432:5432'
-    networks:
-      - dev-network
   graphql-engine:
     image: hasura/graphql-engine:v2.35.1
     depends_on:
@@ -39,17 +35,13 @@ services:
     restart: always
     expose:
       - 8080
-    ports:
-      - '8080:8080'
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-dev_password}@postgres:5432/postgres
-      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET:-{"type":"HS256","key":"dev_key_at_least_32_characters_long"}}
-      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-dev_admin_secret}
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-secretpgpassword}@postgres:5432/postgres
+      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: public
       HASURA_GRAPHQL_LOG_LEVEL: debug
       HASURA_GRAPHQL_ENABLE_CONSOLE: 'true'
-      HASURA_GRAPHQL_DEV_MODE: 'true'
-      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
     healthcheck:
       test:
         - CMD-SHELL
@@ -59,10 +51,8 @@ services:
       start_period: 90s
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.hasura.rule=Host(`${PROXY_HOST:-localhost}`) && PathPrefix(`/`)'
+      - 'traefik.http.routers.hasura.rule=Host(`${PROXY_HOST}`, `localhost`) && PathPrefix(`/`)'
       - 'traefik.http.routers.hasura.entrypoints=web'
-    networks:
-      - dev-network
   auth:
     image: nhost/hasura-auth:0.24
     depends_on:
@@ -73,29 +63,24 @@ services:
       - ./emails:/app/email-templates
     environment:
       AUTH_HOST: '0.0.0.0'
-      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-dev_password}@postgres:5432/postgres
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-secretpgpassword}@postgres:5432/postgres
       HASURA_GRAPHQL_GRAPHQL_URL: http://graphql-engine:8080/v1/graphql
-      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET:-{"type":"HS256","key":"dev_key_at_least_32_characters_long"}}
-      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-dev_admin_secret}
+      HASURA_GRAPHQL_JWT_SECRET: ${HASURA_GRAPHQL_JWT_SECRET}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
       AUTH_CLIENT_URL: ${AUTH_CLIENT_URL:-http://localhost:3000}
       AUTH_SMTP_HOST: mailhog
       AUTH_SMTP_PORT: 1025
       AUTH_SMTP_USER: user
       AUTH_SMTP_PASS: password
       AUTH_SMTP_SENDER: mail@example.com
-      AUTH_DEV_MODE: 'true'
     expose:
       - 4000
-    ports:
-      - '4000:4000'
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.middlewares.strip-auth.stripprefix.prefixes=/v1/auth'
-      - 'traefik.http.routers.auth.rule=Host(`${PROXY_HOST:-localhost}`) && PathPrefix(`/v1/auth`)'
+      - 'traefik.http.routers.auth.rule=Host(`${PROXY_HOST}`, `localhost`) && PathPrefix(`/v1/auth`)'
       - 'traefik.http.routers.auth.middlewares=strip-auth@docker'
       - 'traefik.http.routers.auth.entrypoints=web'
-    networks:
-      - dev-network
   storage:
     image: nhost/hasura-storage:0.4.1
     depends_on:
@@ -105,70 +90,53 @@ services:
     restart: always
     expose:
       - 8000
-    ports:
-      - '8000:8000'
     environment:
-      PUBLIC_URL: ${PROXY_URL:-http://localhost:1337}
+      PUBLIC_URL: ${PROXY_URL}
       HASURA_METADATA: 1
       HASURA_ENDPOINT: http://graphql-engine:8080/v1
-      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-dev_admin_secret}
-      S3_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-dev_access_key}
-      S3_SECRET_KEY: ${STORAGE_SECRET_KEY:-dev_secret_key}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
+      S3_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      S3_SECRET_KEY: ${STORAGE_SECRET_KEY}
       S3_ENDPOINT: http://minio:8484
       S3_BUCKET: nhost
       POSTGRES_MIGRATIONS: 1
-      POSTGRES_MIGRATIONS_SOURCE: postgres://postgres:${POSTGRES_PASSWORD:-dev_password}@postgres:5432/postgres?sslmode=disable
-      DEBUG: '1'
+      POSTGRES_MIGRATIONS_SOURCE: postgres://postgres:${POSTGRES_PASSWORD:-secretpgpassword}@postgres:5432/postgres?sslmode=disable
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.storage.rule=Host(`${PROXY_HOST:-localhost}`) && PathPrefix(`/v1/storage`)'
+      - 'traefik.http.routers.storage.rule=Host(`${PROXY_HOST}`, `localhost`) && PathPrefix(`/v1/storage`)'
       - 'traefik.http.routers.storage.entrypoints=web'
       # Rewrite the path so it matches with the new storage API path introduced in hasura-storage 0.2
       - 'traefik.http.middlewares.strip-suffix.replacepathregex.regex=^/v1/storage/(.*)'
       - 'traefik.http.middlewares.strip-suffix.replacepathregex.replacement=/v1/$$1'
       - 'traefik.http.routers.storage.middlewares=strip-suffix@docker'
-    volumes:
-      - ./migrations:/hasura-migrations
-      - ./metadata:/hasura-metadata
     command: serve
-    networks:
-      - dev-network
   functions:
     image: nhost/functions:1.0.0
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.middlewares.strip-functions.stripprefix.prefixes=/v1/functions'
-      - 'traefik.http.routers.functions.rule=Host(`${PROXY_HOST:-localhost}`) && PathPrefix(`/v1/functions`)'
+      - 'traefik.http.routers.functions.rule=Host(`${PROXY_HOST}`, `localhost`) && PathPrefix(`/v1/functions`)'
       - 'traefik.http.routers.functions.middlewares=strip-functions@docker'
       - 'traefik.http.routers.functions.entrypoints=web'
     restart: always
     expose:
       - 3000
-    ports:
-      - '3001:3000'
-    environment:
-      FUNCTIONS_DEV_MODE: 'true'
     volumes:
       - .:/opt/project
       - functions_node_modules:/opt/project/node_modules
       - /opt/project/data/
       - /opt/project/initdb.d/
-    networks:
-      - dev-network
   minio:
     image: minio/minio:RELEASE.2021-09-24T00-24-24Z
     entrypoint: sh
     command: -c 'mkdir -p /data/nhost && /opt/bin/minio server --address :8484 /data'
     environment:
-      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-dev_access_key}
-      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-dev_secret_key}
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY}
     ports:
       - ${MINIO_PORT:-8484}:8484
-      - '9001:9001'
     volumes:
       - ./data/minio:/data
-    networks:
-      - dev-network
   mailhog:
     image: mailhog/mailhog
     environment:
@@ -180,37 +148,29 @@ services:
       SMTP_SENDER: ${AUTH_SMTP_SENDER:-hbp@hbp.com}
     ports:
       - ${AUTH_SMTP_PORT:-1025}:1025
-      - '8025:8025'
+      - 8025:8025
     volumes:
       - ./data/mailhog:/maildir
-    networks:
-      - dev-network
   dashboard:
     image: nhost/dashboard:0.21.1
     environment:
-      NEXT_PUBLIC_NHOST_HASURA_MIGRATIONS_API_URL: ${NEXT_PUBLIC_NHOST_HASURA_MIGRATIONS_API_URL:-http://localhost:1337}
-      NEXT_PUBLIC_NHOST_HASURA_CONSOLE_URL: ${NEXT_PUBLIC_NHOST_HASURA_CONSOLE_URL:-http://localhost:8080}
-      NEXT_PUBLIC_NHOST_HASURA_API_URL: ${NEXT_PUBLIC_NHOST_HASURA_API_URL:-http://localhost:8080/v1}
-      NEXT_PUBLIC_NHOST_ADMIN_SECRET: ${NEXT_PUBLIC_NHOST_ADMIN_SECRET:-dev_admin_secret}
-      NEXT_PUBLIC_NHOST_AUTH_URL: ${NEXT_PUBLIC_NHOST_AUTH_URL:-http://localhost:1337/v1/auth}
-      NEXT_PUBLIC_NHOST_GRAPHQL_URL: ${NEXT_PUBLIC_NHOST_GRAPHQL_URL:-http://localhost:1337/v1/graphql}
-      NEXT_PUBLIC_NHOST_STORAGE_URL: ${NEXT_PUBLIC_NHOST_STORAGE_URL:-http://localhost:1337/v1/storage}
-      NEXT_PUBLIC_NHOST_FUNCTIONS_URL: ${NEXT_PUBLIC_NHOST_FUNCTIONS_URL:-http://localhost:1337/v1/functions}
-      NEXT_PUBLIC_NHOST_CONFIGSERVER_URL: ${NEXT_PUBLIC_NHOST_CONFIGSERVER_URL:-http://localhost:3030}
+      NEXT_PUBLIC_NHOST_HASURA_MIGRATIONS_API_URL: ${NEXT_PUBLIC_NHOST_HASURA_MIGRATIONS_API_URL}
+      NEXT_PUBLIC_NHOST_HASURA_CONSOLE_URL: ${NEXT_PUBLIC_NHOST_HASURA_CONSOLE_URL}
+      NEXT_PUBLIC_NHOST_HASURA_API_URL: ${NEXT_PUBLIC_NHOST_HASURA_API_URL}
+      NEXT_PUBLIC_NHOST_ADMIN_SECRET: ${NEXT_PUBLIC_NHOST_ADMIN_SECRET}
+      NEXT_PUBLIC_NHOST_AUTH_URL: ${NEXT_PUBLIC_NHOST_AUTH_URL}
+      NEXT_PUBLIC_NHOST_GRAPHQL_URL: ${NEXT_PUBLIC_NHOST_GRAPHQL_URL}
+      NEXT_PUBLIC_NHOST_STORAGE_URL: ${NEXT_PUBLIC_NHOST_STORAGE_URL}
+      NEXT_PUBLIC_NHOST_FUNCTIONS_URL: ${NEXT_PUBLIC_NHOST_FUNCTIONS_URL}
+      NEXT_PUBLIC_NHOST_CONFIGSERVER_URL: ${NEXT_PUBLIC_NHOST_CONFIGSERVER_URL}
     expose:
       - 3000
-    ports:
-      - '3031:3000'
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.nhost.rule=Host(`${NHOST_HOST:-localhost}`)'
+      - 'traefik.http.routers.nhost.rule=Host(`${NHOST_HOST}`)'
       - 'traefik.http.routers.nhost.entrypoints=admin'
-    networks:
-      - dev-network
-
-networks:
-  dev-network:
-    driver: bridge
-
+      # If you would like to protect your dashboard with a username and password if it is publicly-facing, uncomment and fill in the following lines below according to the documentation at https://doc.traefik.io/traefik/middlewares/http/basicauth/
+      #- "traefik.http.routers.nhost.middlewares=auth"
+      #- "traefik.http.middlewares.auth.basicauth.users=
 volumes:
   functions_node_modules:
