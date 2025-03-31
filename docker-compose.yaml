@@ -90,6 +90,7 @@ services:
       - '4000:4000'
     labels:
       - 'traefik.enable=true'
+      - 'traefik.http.middlewares.strip-auth.stripprefix.prefixes=/v1/auth'
       - 'traefik.http.routers.auth.rule=Host(`${PROXY_HOST:-localhost}`) && PathPrefix(`/v1/auth`)'
       - 'traefik.http.routers.auth.middlewares=strip-auth@docker'
       - 'traefik.http.routers.auth.entrypoints=web'
