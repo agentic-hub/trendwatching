@@ -1,0 +1,11 @@
+name: instagram_scraper
+webhook: '{{FUNCTIONS_URL}}/instagram-scraper'
+schedule: 0 0 * * *  # Run daily at midnight
+include_in_metadata: true
+payload: {}
+retry_conf:
+  num_retries: 3
+  retry_interval_seconds: 120
+  timeout_seconds: 300
+  tolerance_seconds: 21600
+comment: This cron job runs daily to scrape Instagram accounts 

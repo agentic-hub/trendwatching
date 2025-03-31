@@ -1,12 +1,14 @@
 {
-  "name": "nhost-project",
+  "name": "trendwatching",
   "version": "1.0.0",
-  "description": "Nhost project with functions",
+  "description": "Trendwatching application with Instagram scraping integration",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "graphql-request": "^5.2.0",
+    "node-fetch": "^3.3.0"
   }
 } 
